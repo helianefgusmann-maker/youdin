@@ -60,8 +60,15 @@ function RegistroRapido() {
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     const numero = Number(valor.replace(/\./g, "").replace(",", "."));
-    if (!descricao.trim()) return toast.error("Escreva o que você comprou.");
-    if (!numero || numero <= 0) return toast.error("Informe um valor válido.");
+    if (!descricao.trim()) {
+      toast.error("Escreva o que você comprou.");
+      return;
+    }
+    if (!numero || numero <= 0) {
+      toast.error("Informe um valor válido.");
+      return;
+    }
+
 
     try {
       await insert.mutateAsync({
