@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cofrinhos: {
+        Row: {
+          created_at: string
+          guardado: number
+          id: string
+          meta: number
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          guardado?: number
+          id?: string
+          meta?: number
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          guardado?: number
+          id?: string
+          meta?: number
+          nome?: string
+        }
+        Relationships: []
+      }
+      entradas: {
+        Row: {
+          created_at: string
+          data_ref: string
+          descricao: string
+          id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data_ref?: string
+          descricao?: string
+          id?: string
+          tipo?: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          data_ref?: string
+          descricao?: string
+          id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      gastos: {
+        Row: {
+          banco: string
+          categoria: string
+          created_at: string
+          data_compra: string
+          descricao: string
+          id: string
+          observacao: string | null
+          pagamento: string
+          pago: boolean
+          parcela: string | null
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          banco?: string
+          categoria?: string
+          created_at?: string
+          data_compra?: string
+          descricao: string
+          id?: string
+          observacao?: string | null
+          pagamento?: string
+          pago?: boolean
+          parcela?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Update: {
+          banco?: string
+          categoria?: string
+          created_at?: string
+          data_compra?: string
+          descricao?: string
+          id?: string
+          observacao?: string | null
+          pagamento?: string
+          pago?: boolean
+          parcela?: string | null
+          tipo?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
