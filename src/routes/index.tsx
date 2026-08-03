@@ -100,46 +100,39 @@ function RegistroRapido() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:py-12">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+    <main className="mx-auto w-full max-w-2xl px-3 pb-16 pt-5 sm:px-5 sm:pt-8">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
             Controle de Gastos 2026
           </p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+          <h1 className="truncate text-xl font-bold sm:text-2xl">
             <span className="text-gradient-brand">Registro rápido</span>
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gastou? Lance aqui em 5 segundos — a categoria é detectada sozinha.
-          </p>
         </div>
         <Link
           to="/planilha"
-          className="rounded-xl border border-border bg-[var(--surface)] px-4 py-2.5 text-sm font-semibold transition hover:border-primary hover:text-primary"
+          className="shrink-0 rounded-xl border border-border bg-[var(--surface)] px-3 py-2 text-xs font-semibold transition hover:border-primary hover:text-primary"
         >
-          Abrir planilha →
+          Planilha →
         </Link>
       </header>
 
-      <form onSubmit={salvar} className="panel p-5 sm:p-7">
-        <div>
-          <label className={rotulo} htmlFor="valor">
-            Quanto foi?
-          </label>
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-[var(--surface-2)] px-4 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30">
-            <span className="num text-2xl text-muted-foreground">R$</span>
-            <input
-              id="valor"
-              inputMode="decimal"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder="0,00"
-              className="num w-full bg-transparent py-4 text-3xl font-semibold outline-none placeholder:text-muted-foreground/50"
-            />
-          </div>
+      <form onSubmit={salvar} className="panel mt-4 p-4">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--surface-2)] px-3 focus-within:border-primary">
+          <span className="num text-lg text-muted-foreground">R$</span>
+          <input
+            id="valor"
+            inputMode="decimal"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder="0,00"
+            aria-label="Valor"
+            className="num w-full bg-transparent py-2.5 text-2xl font-semibold outline-none placeholder:text-muted-foreground/50"
+          />
         </div>
 
-        <div className="mt-5">
+        <div className="mt-3">
           <label className={rotulo} htmlFor="descricao">
             O que você comprou?
           </label>
@@ -153,58 +146,43 @@ function RegistroRapido() {
             placeholder="Ex: iFood, gasolina, tênis novo..."
             className={campo}
           />
-          {descricao.trim() && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Categoria detectada:{" "}
-              <span className="font-semibold text-primary">{categoria}</span>
-            </p>
-          )}
         </div>
 
-        <div className="mt-5">
-          <span className={rotulo}>Categoria</span>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIAS.map((c) => {
-              const ativa = c === categoria;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategoriaManual(c)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    ativa
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-[var(--surface-2)] text-muted-foreground hover:border-primary/60 hover:text-foreground"
-                  }`}
-                >
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div>
+            <label className={rotulo} htmlFor="categoria">
+              Categoria {categoriaManual === null && descricao.trim() ? "(auto)" : ""}
+            </label>
+            <select
+              id="categoria"
+              value={categoria}
+              onChange={(e) => setCategoriaManual(e.target.value)}
+              className={campo}
+            >
+              {categoriasOrdenadas.map((c) => (
+                <option key={c} value={c}>
                   {c}
-                </button>
-              );
-            })}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <span className={rotulo}>Banco / cartão</span>
-          <div className="flex flex-wrap gap-2">
-            {BANCOS.map((b) => (
-              <button
-                key={b}
-                type="button"
-                onClick={() => setBanco(b)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                  b === banco
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-border bg-[var(--surface-2)] text-muted-foreground hover:border-accent/60 hover:text-foreground"
-                }`}
-              >
-                {b}
-              </button>
-            ))}
+          <div>
+            <label className={rotulo} htmlFor="banco">
+              Banco / cartão
+            </label>
+            <select
+              id="banco"
+              value={banco}
+              onChange={(e) => setBanco(e.target.value)}
+              className={campo}
+            >
+              {bancosOrdenados.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <div>
             <label className={rotulo} htmlFor="pagamento">
               Pagamento
@@ -239,7 +217,7 @@ function RegistroRapido() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="col-span-2">
             <label className={rotulo} htmlFor="parcela">
               Parcela (opcional)
             </label>
@@ -256,19 +234,20 @@ function RegistroRapido() {
         <button
           type="submit"
           disabled={insert.isPending}
-          className="mt-7 w-full rounded-xl bg-primary px-6 py-4 text-base font-bold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+          className="mt-4 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
         >
           {insert.isPending ? "Salvando..." : "Registrar gasto"}
         </button>
       </form>
 
-      <section className="mt-8">
-        <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-lg font-bold">Últimos lançamentos</h2>
-          <span className="num text-sm text-muted-foreground">
-            Este mês: <span className="font-semibold text-accent">{brl(totalMes)}</span>
+      <section className="mt-5">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <h2 className="text-sm font-bold">Últimos lançamentos</h2>
+          <span className="num text-xs text-muted-foreground">
+            Mês: <span className="font-semibold text-accent">{brl(totalMes)}</span>
           </span>
         </div>
+
         <ul className="space-y-2">
           {gastos.slice(0, 6).map((g) => (
             <li key={g.id} className="panel flex items-center justify-between gap-3 px-4 py-3">
