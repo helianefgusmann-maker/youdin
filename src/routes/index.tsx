@@ -50,6 +50,12 @@ function RegistroRapido() {
 
   const sugerida = useMemo(() => detectarCategoria(descricao), [descricao]);
   const categoria = categoriaManual ?? sugerida;
+  const categoriasOrdenadas = useMemo(
+    () => [...CATEGORIAS].sort((a, b) => a.localeCompare(b, "pt-BR")),
+    [],
+  );
+  const bancosOrdenados = useMemo(() => [...BANCOS].sort((a, b) => a.localeCompare(b, "pt-BR")), []);
+
 
   const hoje = new Date();
   const gastosDoMes = gastos.filter((g) => {
