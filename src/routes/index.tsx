@@ -32,8 +32,9 @@ export const Route = createFileRoute("/")({
 });
 
 const campo =
-  "w-full rounded-xl border border-border bg-[var(--surface-2)] px-4 py-3 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30";
-const rotulo = "mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground";
+  "w-full rounded-lg border border-border bg-[var(--surface-2)] px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary";
+const rotulo = "mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
+
 
 function RegistroRapido() {
   const { data: gastos = [] } = useGastos();
