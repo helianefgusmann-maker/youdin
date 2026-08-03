@@ -248,23 +248,24 @@ function RegistroRapido() {
           </span>
         </div>
 
-        <ul className="space-y-2">
+        <ul className="space-y-1.5">
           {gastos.slice(0, 6).map((g) => (
-            <li key={g.id} className="panel flex items-center justify-between gap-3 px-4 py-3">
+            <li key={g.id} className="panel flex items-center justify-between gap-3 px-3 py-2.5">
               <div className="min-w-0">
-                <p className="truncate font-semibold">{g.descricao}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate text-sm font-semibold">{g.descricao}</p>
+                <p className="truncate text-[10px] text-muted-foreground">
                   {g.categoria} · {g.banco} · {dataHora(g.data_compra)}
                 </p>
               </div>
-              <span className="num shrink-0 font-semibold">{brl(g.valor)}</span>
+              <span className="num shrink-0 text-sm font-semibold">{brl(g.valor)}</span>
             </li>
           ))}
           {gastos.length === 0 && (
-            <li className="panel px-4 py-6 text-center text-sm text-muted-foreground">
+            <li className="panel px-4 py-5 text-center text-xs text-muted-foreground">
               Nenhum gasto registrado ainda.
             </li>
           )}
+
         </ul>
       </section>
     </main>
