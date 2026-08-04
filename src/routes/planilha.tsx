@@ -406,9 +406,11 @@ function Planilha() {
       )}
 
       {aba === "anual" && (
-        <section className="panel mt-4 p-4">
-          <h2 className="mb-3 text-sm font-bold">Resumo anual {ano}</h2>
-          <div className="overflow-x-auto">
+        <section className="panel panel-glow mt-4 p-4">
+          <h2 className="mb-1 text-sm font-bold">Resumo anual {ano}</h2>
+          <GraficoAnual dados={resumoAnual} />
+          <div className="mt-4 overflow-x-auto">
+
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
