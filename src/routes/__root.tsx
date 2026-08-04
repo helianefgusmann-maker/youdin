@@ -109,11 +109,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const TEMA_INICIAL = `(function(){try{var t=localStorage.getItem('tema-financas')||'dark';var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.style.colorScheme=t;}catch(e){}})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: TEMA_INICIAL }} />
       </head>
       <body>
         {children}
