@@ -146,12 +146,15 @@ function Planilha() {
             <span className="text-gradient-brand">Minha planilha</span>
           </h1>
         </div>
-        <Link
-          to="/"
-          className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:brightness-110"
-        >
-          + Gasto
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <ToggleTema />
+          <Link
+            to="/"
+            className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:brightness-110"
+          >
+            + Gasto
+          </Link>
+        </div>
       </header>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
