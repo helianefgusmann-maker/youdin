@@ -11,6 +11,7 @@ import {
   detectarCategoria,
 } from "@/lib/financas";
 import { useGastos, useMutateTable } from "@/lib/useFinancas";
+import { ToggleTema } from "@/components/ToggleTema";
 
 export const Route = createFileRoute("/")({
   component: RegistroRapido,
