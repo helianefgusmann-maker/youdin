@@ -47,7 +47,7 @@ function paleta(escuro: boolean) {
 
 function usePaleta() {
   const { tema } = useTema();
-  return paleta(tema === "dark");
+  return { ...paleta(tema === "dark"), tema };
 }
 
 function estiloTooltip(p: ReturnType<typeof paleta>) {
@@ -76,7 +76,7 @@ export function GraficoCategorias({
   }
 
   return (
-    <div className="h-64 w-full">
+    <div key={p.tema} className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -111,7 +111,7 @@ export function GraficoBancos({ dados }: { dados: Array<{ banco: string; total: 
   }
 
   return (
-    <div className="h-56 w-full">
+    <div key={p.tema} className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={dados} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
           <XAxis
@@ -146,7 +146,7 @@ export function GraficoAnual({
   const p = usePaleta();
 
   return (
-    <div className="h-64 w-full">
+    <div key={p.tema} className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={dados} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
           <defs>
