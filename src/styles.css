@@ -52,6 +52,7 @@
 
 /* ---------- MODO CLARO ---------- */
 :root {
+  color-scheme: light;
   --radius: 0.85rem;
   --background: oklch(0.98 0.006 250);
   --foreground: oklch(0.22 0.03 265);
