@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { BANCOS, CATEGORIAS, MESES, brl, dataHora } from "@/lib/financas";
 import { useCofrinhos, useEntradas, useGastos, useMutateTable } from "@/lib/useFinancas";
+import { ToggleTema } from "@/components/ToggleTema";
+import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
 
 export const Route = createFileRoute("/planilha")({
   component: Planilha,
