@@ -109,11 +109,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const TEMA_INICIAL = `(function(){try{var t=localStorage.getItem('tema-financas')||'dark';document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: TEMA_INICIAL }} />
       </head>
       <body>
         {children}
@@ -130,7 +133,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      <Toaster position="top-center" theme="dark" richColors />
+      <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
 }

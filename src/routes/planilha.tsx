@@ -3,6 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { BANCOS, CATEGORIAS, MESES, brl, dataHora } from "@/lib/financas";
 import { useCofrinhos, useEntradas, useGastos, useMutateTable } from "@/lib/useFinancas";
+import { ToggleTema } from "@/components/ToggleTema";
+import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
 
 export const Route = createFileRoute("/planilha")({
   component: Planilha,
@@ -144,12 +146,15 @@ function Planilha() {
             <span className="text-gradient-brand">Minha planilha</span>
           </h1>
         </div>
-        <Link
-          to="/"
-          className="shrink-0 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:brightness-110"
-        >
-          + Gasto
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <ToggleTema />
+          <Link
+            to="/"
+            className="rounded-xl bg-primary px-3 py-2 text-xs font-bold text-primary-foreground transition hover:brightness-110"
+          >
+            + Gasto
+          </Link>
+        </div>
       </header>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
@@ -198,9 +203,10 @@ function Planilha() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="panel p-4">
-              <h2 className="mb-3 text-sm font-bold">Gastos por categoria</h2>
-              <ul className="space-y-2.5">
+            <div className="panel panel-glow p-4">
+              <h2 className="mb-1 text-sm font-bold">Gastos por categoria</h2>
+              <GraficoCategorias dados={porCategoria} />
+              <ul className="mt-3 space-y-2.5">
                 {porCategoria.map((l) => (
                   <li key={l.categoria}>
                     <div className="mb-1 flex justify-between gap-2 text-xs">
@@ -215,15 +221,14 @@ function Planilha() {
                     </div>
                   </li>
                 ))}
-                {porCategoria.length === 0 && (
-                  <li className="text-xs text-muted-foreground">Sem gastos neste mês.</li>
-                )}
               </ul>
             </div>
 
             <div className="panel p-4">
-              <h2 className="mb-3 text-sm font-bold">Fatura por banco</h2>
-              <ul className="space-y-2 text-xs">
+              <h2 className="mb-1 text-sm font-bold">Fatura por banco</h2>
+              <GraficoBancos dados={porBanco} />
+              <ul className="mt-3 space-y-2 text-xs">
+
                 {porBanco.map((b) => (
                   <li
                     key={b.banco}
@@ -401,9 +406,11 @@ function Planilha() {
       )}
 
       {aba === "anual" && (
-        <section className="panel mt-4 p-4">
-          <h2 className="mb-3 text-sm font-bold">Resumo anual {ano}</h2>
-          <div className="overflow-x-auto">
+        <section className="panel panel-glow mt-4 p-4">
+          <h2 className="mb-1 text-sm font-bold">Resumo anual {ano}</h2>
+          <GraficoAnual dados={resumoAnual} />
+          <div className="mt-4 overflow-x-auto">
+
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">

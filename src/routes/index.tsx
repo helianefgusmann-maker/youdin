@@ -11,6 +11,7 @@ import {
   detectarCategoria,
 } from "@/lib/financas";
 import { useGastos, useMutateTable } from "@/lib/useFinancas";
+import { ToggleTema } from "@/components/ToggleTema";
 
 export const Route = createFileRoute("/")({
   component: RegistroRapido,
@@ -110,12 +111,15 @@ function RegistroRapido() {
             <span className="text-gradient-brand">Registro rápido</span>
           </h1>
         </div>
-        <Link
-          to="/planilha"
-          className="shrink-0 rounded-xl border border-border bg-[var(--surface)] px-3 py-2 text-xs font-semibold transition hover:border-primary hover:text-primary"
-        >
-          Planilha →
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <ToggleTema />
+          <Link
+            to="/planilha"
+            className="rounded-xl border border-border bg-[var(--surface)] px-3 py-2 text-xs font-semibold transition hover:border-primary hover:text-primary"
+          >
+            Planilha →
+          </Link>
+        </div>
       </header>
 
       <form onSubmit={salvar} className="panel mt-4 p-4">
