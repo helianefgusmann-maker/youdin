@@ -200,9 +200,10 @@ function Planilha() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="panel p-4">
-              <h2 className="mb-3 text-sm font-bold">Gastos por categoria</h2>
-              <ul className="space-y-2.5">
+            <div className="panel panel-glow p-4">
+              <h2 className="mb-1 text-sm font-bold">Gastos por categoria</h2>
+              <GraficoCategorias dados={porCategoria} />
+              <ul className="mt-3 space-y-2.5">
                 {porCategoria.map((l) => (
                   <li key={l.categoria}>
                     <div className="mb-1 flex justify-between gap-2 text-xs">
@@ -217,15 +218,14 @@ function Planilha() {
                     </div>
                   </li>
                 ))}
-                {porCategoria.length === 0 && (
-                  <li className="text-xs text-muted-foreground">Sem gastos neste mês.</li>
-                )}
               </ul>
             </div>
 
             <div className="panel p-4">
-              <h2 className="mb-3 text-sm font-bold">Fatura por banco</h2>
-              <ul className="space-y-2 text-xs">
+              <h2 className="mb-1 text-sm font-bold">Fatura por banco</h2>
+              <GraficoBancos dados={porBanco} />
+              <ul className="mt-3 space-y-2 text-xs">
+
                 {porBanco.map((b) => (
                   <li
                     key={b.banco}
