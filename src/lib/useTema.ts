@@ -1,31 +1,32 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export type Tema = "dark" | "light";
 
 const CHAVE = "tema-financas";
+const ouvintes = new Set<() => void>();
 
-function aplicar(tema: Tema) {
-  const raiz = document.documentElement;
-  raiz.classList.toggle("dark", tema === "dark");
-  raiz.style.colorScheme = tema;
+function ler(): Tema {
+  if (typeof document === "undefined") return "dark";
+  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+}
+
+function inscrever(cb: () => void) {
+  ouvintes.add(cb);
+  return () => ouvintes.delete(cb);
 }
 
 export function useTema() {
-  const [tema, setTema] = useState<Tema>("dark");
-
-  useEffect(() => {
-    const salvo = (localStorage.getItem(CHAVE) as Tema | null) ?? "dark";
-    setTema(salvo);
-    aplicar(salvo);
-  }, []);
+  const tema = useSyncExternalStore<Tema>(inscrever, ler, () => "dark");
 
   const alternar = useCallback(() => {
-    setTema((atual) => {
-      const proximo: Tema = atual === "dark" ? "light" : "dark";
+    const proximo: Tema = ler() === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", proximo === "dark");
+    try {
       localStorage.setItem(CHAVE, proximo);
-      aplicar(proximo);
-      return proximo;
-    });
+    } catch {
+      /* ignora */
+    }
+    ouvintes.forEach((cb) => cb());
   }, []);
 
   return { tema, alternar };
