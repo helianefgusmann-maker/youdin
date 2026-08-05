@@ -42,8 +42,10 @@ const ABAS = [
   { id: "gastos", label: "Gastos" },
   { id: "entradas", label: "Entradas" },
   { id: "cofrinhos", label: "Cofrinhos" },
+  { id: "lembretes", label: "Lembretes" },
   { id: "anual", label: "Anual" },
 ] as const;
+
 
 type Aba = (typeof ABAS)[number]["id"];
 
