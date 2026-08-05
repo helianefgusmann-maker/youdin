@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Cofrinho, Entrada, Gasto } from "./financas";
+import type { Cofrinho, Entrada, Gasto, Lembrete } from "./financas";
+
 
 export function useGastos() {
   return useQuery({
@@ -45,12 +46,28 @@ export function useCofrinhos() {
   });
 }
 
+export function useLembretes() {
+  return useQuery({
+    queryKey: ["lembretes"],
+    queryFn: async (): Promise<Lembrete[]> => {
+      const { data, error } = await supabase
+        .from("lembretes")
+        .select("*")
+        .order("concluido")
+        .order("vence_em", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return (data ?? []).map((l) => ({ ...l, valor: Number(l.valor) })) as Lembrete[];
+    },
+  });
+}
+
 export function useInvalidate() {
   const qc = useQueryClient();
   return (key: string) => qc.invalidateQueries({ queryKey: [key] });
 }
 
-export function useMutateTable(table: "gastos" | "entradas" | "cofrinhos") {
+export function useMutateTable(table: "gastos" | "entradas" | "cofrinhos" | "lembretes") {
+
   const invalidate = useInvalidate();
 
   const insert = useMutation({

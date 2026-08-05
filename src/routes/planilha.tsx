@@ -1,10 +1,17 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { BANCOS, CATEGORIAS, MESES, brl, dataHora } from "@/lib/financas";
-import { useCofrinhos, useEntradas, useGastos, useMutateTable } from "@/lib/useFinancas";
+import { BANCOS, CATEGORIAS, MESES, brl, dataHora, inicioDaSemana } from "@/lib/financas";
+import {
+  useCofrinhos,
+  useEntradas,
+  useGastos,
+  useLembretes,
+  useMutateTable,
+} from "@/lib/useFinancas";
 import { ToggleTema } from "@/components/ToggleTema";
 import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
+
 
 export const Route = createFileRoute("/planilha")({
   component: Planilha,
@@ -35,8 +42,10 @@ const ABAS = [
   { id: "gastos", label: "Gastos" },
   { id: "entradas", label: "Entradas" },
   { id: "cofrinhos", label: "Cofrinhos" },
+  { id: "lembretes", label: "Lembretes" },
   { id: "anual", label: "Anual" },
 ] as const;
+
 
 type Aba = (typeof ABAS)[number]["id"];
 
@@ -60,13 +69,20 @@ function Planilha() {
   const { data: gastos = [], isLoading } = useGastos();
   const { data: entradas = [] } = useEntradas();
   const { data: cofrinhos = [] } = useCofrinhos();
+  const { data: lembretes = [] } = useLembretes();
 
   const gastosTable = useMutateTable("gastos");
   const entradasTable = useMutateTable("entradas");
   const cofrinhosTable = useMutateTable("cofrinhos");
+  const lembretesTable = useMutateTable("lembretes");
 
   const [novaEntradaDesc, setNovaEntradaDesc] = useState("");
   const [novaEntradaValor, setNovaEntradaValor] = useState("");
+  const [novoCofrinho, setNovoCofrinho] = useState("");
+  const [novoCofrinhoMeta, setNovoCofrinhoMeta] = useState("");
+  const [novoLembrete, setNovoLembrete] = useState("");
+  const [novoLembreteValor, setNovoLembreteValor] = useState("");
+  const [novoLembreteData, setNovoLembreteData] = useState("");
 
   const doAno = gastos.filter((g) => new Date(g.data_compra).getFullYear() === ano);
   const doMes = doAno.filter((g) => new Date(g.data_compra).getMonth() === mes);
@@ -76,11 +92,17 @@ function Planilha() {
   });
 
   const totalMes = doMes.reduce((s, g) => s + g.valor, 0);
+  const comecoSemana = inicioDaSemana(agora);
+  const totalSemana = gastos
+    .filter((g) => new Date(g.data_compra) >= comecoSemana)
+    .reduce((s, g) => s + g.valor, 0);
   const totalEntradas = entradasMes.reduce((s, e) => s + e.valor, 0);
   const credito = doMes.filter((g) => g.pagamento === "Crédito").reduce((s, g) => s + g.valor, 0);
   const debito = totalMes - credito;
   const guardado = cofrinhos.reduce((s, c) => s + c.guardado, 0);
   const saldo = totalEntradas - totalMes;
+  const pendentes = lembretes.filter((l) => !l.concluido);
+
 
   const porCategoria = useMemo(
     () =>
@@ -134,6 +156,40 @@ function Planilha() {
     setNovaEntradaValor("");
     toast.success("Entrada adicionada.");
   }
+
+  async function addCofrinho(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novoCofrinho.trim()) {
+      toast.error("Dê um nome ao cofrinho.");
+      return;
+    }
+    await cofrinhosTable.insert.mutateAsync({
+      nome: novoCofrinho.trim(),
+      meta: Number(novoCofrinhoMeta.replace(/\./g, "").replace(",", ".")) || 0,
+      guardado: 0,
+    });
+    setNovoCofrinho("");
+    setNovoCofrinhoMeta("");
+    toast.success("Cofrinho criado.");
+  }
+
+  async function addLembrete(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novoLembrete.trim()) {
+      toast.error("Escreva o lembrete.");
+      return;
+    }
+    await lembretesTable.insert.mutateAsync({
+      titulo: novoLembrete.trim(),
+      valor: Number(novoLembreteValor.replace(/\./g, "").replace(",", ".")) || 0,
+      vence_em: novoLembreteData || null,
+    });
+    setNovoLembrete("");
+    setNovoLembreteValor("");
+    setNovoLembreteData("");
+    toast.success("Lembrete criado.");
+  }
+
 
   return (
     <main className="mx-auto w-full max-w-5xl px-3 pb-16 pt-5 sm:px-5 sm:pt-8">
@@ -195,12 +251,29 @@ function Planilha() {
 
       {aba === "resumo" && (
         <section className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {pendentes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAba("lembretes")}
+              className="panel flex w-full items-center justify-between gap-2 p-3 text-left text-xs"
+            >
+              <span className="truncate">
+                🔔 <span className="font-semibold">{pendentes.length}</span> pendência(s):{" "}
+                <span className="text-muted-foreground">
+                  {pendentes.map((l) => l.titulo).join(", ")}
+                </span>
+              </span>
+              <span className="shrink-0 font-semibold text-primary">ver →</span>
+            </button>
+          )}
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
             <Stat titulo="Entradas" valor={brl(totalEntradas)} cor="text-primary" />
-            <Stat titulo="Total gasto" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto no mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto na semana" valor={brl(totalSemana)} cor="text-accent" />
             <Stat titulo="Saldo" valor={brl(saldo)} cor={saldo < 0 ? "text-destructive" : "text-primary"} />
             <Stat titulo="Guardado" valor={brl(guardado)} cor="text-accent" />
           </div>
+
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="panel panel-glow p-4">
@@ -255,7 +328,10 @@ function Planilha() {
 
       {aba === "gastos" && (
         <section className="mt-4 space-y-2">
-          {doMes.map((g) => (
+          {doMes.map((g) => {
+            const partes = g.parcela?.split("/");
+            const totalParcelas = partes && partes.length === 2 ? Number(partes[1]) || 1 : 1;
+            return (
             <article key={g.id} className="panel p-3">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <div className="min-w-0">
@@ -264,8 +340,16 @@ function Planilha() {
                     {dataHora(g.data_compra)}
                   </p>
                 </div>
-                <p className="num shrink-0 text-sm font-bold text-accent">{brl(g.valor)}</p>
+                <p className="shrink-0 text-right">
+                  <span className="num block text-sm font-bold text-accent">{brl(g.valor)}</span>
+                  {totalParcelas > 1 && (
+                    <span className="num block text-[10px] text-muted-foreground">
+                      {totalParcelas}x {brl(g.valor / totalParcelas)}
+                    </span>
+                  )}
+                </p>
               </div>
+
               <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
                 <span className="rounded-full border border-border px-2 py-0.5">{g.categoria}</span>
                 <span className="rounded-full border border-border px-2 py-0.5">{g.banco}</span>
@@ -295,7 +379,9 @@ function Planilha() {
                 </span>
               </div>
             </article>
-          ))}
+            );
+          })}
+
           {!isLoading && doMes.length === 0 && (
             <p className="panel p-6 text-center text-xs text-muted-foreground">
               Nenhum gasto em {MESES[mes]} de {ano}.
@@ -359,10 +445,42 @@ function Planilha() {
             <span className="text-muted-foreground">Total guardado</span>
             <span className="num font-bold text-accent">{brl(guardado)}</span>
           </div>
+          <form onSubmit={addCofrinho} className="panel grid grid-cols-[minmax(0,1fr)_5rem_auto] gap-2 p-3">
+            <input
+              value={novoCofrinho}
+              onChange={(ev) => setNovoCofrinho(ev.target.value)}
+              placeholder="Novo cofrinho (ex: Viagem)"
+              className={campo}
+            />
+            <input
+              value={novoCofrinhoMeta}
+              onChange={(ev) => setNovoCofrinhoMeta(ev.target.value)}
+              inputMode="decimal"
+              placeholder="Meta"
+              className={`${campo} num`}
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground"
+            >
+              +
+            </button>
+          </form>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cofrinhos.map((c) => (
               <div key={c.id} className="panel p-3">
-                <p className="mb-2 truncate text-sm font-semibold">{c.nome}</p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold">{c.nome}</p>
+                  <button
+                    type="button"
+                    onClick={() => cofrinhosTable.remove.mutate(c.id)}
+                    className="shrink-0 text-muted-foreground transition hover:text-destructive"
+                    aria-label={`Remover cofrinho ${c.nome}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Meta
@@ -404,6 +522,100 @@ function Planilha() {
           </div>
         </section>
       )}
+
+      {aba === "lembretes" && (
+        <section className="panel mt-4 p-4">
+          <h2 className="mb-1 text-sm font-bold">Lembretes e pendências</h2>
+          <p className="mb-3 text-[10px] text-muted-foreground">
+            {pendentes.length} pendente(s) de {lembretes.length}
+          </p>
+          <form onSubmit={addLembrete} className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_9rem_auto]">
+            <input
+              value={novoLembrete}
+              onChange={(ev) => setNovoLembrete(ev.target.value)}
+              placeholder="Ex: pagar fatura do Nubank"
+              className={campo}
+            />
+            <input
+              value={novoLembreteValor}
+              onChange={(ev) => setNovoLembreteValor(ev.target.value)}
+              inputMode="decimal"
+              placeholder="Valor"
+              className={`${campo} num`}
+            />
+            <input
+              type="date"
+              value={novoLembreteData}
+              onChange={(ev) => setNovoLembreteData(ev.target.value)}
+              className={`${campo} num`}
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground"
+            >
+              +
+            </button>
+          </form>
+
+          <ul className="space-y-2 text-xs">
+            {lembretes.map((l) => {
+              const atrasado =
+                !l.concluido && !!l.vence_em && new Date(`${l.vence_em}T23:59:59`) < agora;
+              return (
+                <li
+                  key={l.id}
+                  className="flex items-center gap-2 border-b border-border/50 pb-2 last:border-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      lembretesTable.update.mutate({
+                        id: l.id,
+                        values: { concluido: !l.concluido },
+                      })
+                    }
+                    className={l.concluido ? "text-primary" : "text-muted-foreground"}
+                    aria-label="Marcar como concluído"
+                  >
+                    {l.concluido ? "✅" : "⬜"}
+                  </button>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block truncate ${l.concluido ? "text-muted-foreground line-through" : "font-semibold"}`}
+                    >
+                      {l.titulo}
+                    </span>
+                    {l.vence_em && (
+                      <span
+                        className={`num block text-[10px] ${atrasado ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        vence {new Date(`${l.vence_em}T12:00:00`).toLocaleDateString("pt-BR")}
+                        {atrasado ? " · atrasado" : ""}
+                      </span>
+                    )}
+                  </span>
+                  {l.valor > 0 && (
+                    <span className="num shrink-0 font-semibold text-accent">{brl(l.valor)}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => lembretesTable.remove.mutate(l.id)}
+                    className="shrink-0 text-muted-foreground transition hover:text-destructive"
+                    aria-label="Excluir lembrete"
+                  >
+                    ✕
+                  </button>
+                </li>
+              );
+            })}
+            {lembretes.length === 0 && (
+              <li className="text-muted-foreground">Nenhum lembrete por aqui.</li>
+            )}
+          </ul>
+        </section>
+      )}
+
+
 
       {aba === "anual" && (
         <section className="panel panel-glow mt-4 p-4">

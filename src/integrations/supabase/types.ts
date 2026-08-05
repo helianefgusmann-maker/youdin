@@ -110,6 +110,33 @@ export type Database = {
         }
         Relationships: []
       }
+      lembretes: {
+        Row: {
+          concluido: boolean
+          created_at: string
+          id: string
+          titulo: string
+          valor: number
+          vence_em: string | null
+        }
+        Insert: {
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          titulo: string
+          valor?: number
+          vence_em?: string | null
+        }
+        Update: {
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          titulo?: string
+          valor?: number
+          vence_em?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
