@@ -69,13 +69,20 @@ function Planilha() {
   const { data: gastos = [], isLoading } = useGastos();
   const { data: entradas = [] } = useEntradas();
   const { data: cofrinhos = [] } = useCofrinhos();
+  const { data: lembretes = [] } = useLembretes();
 
   const gastosTable = useMutateTable("gastos");
   const entradasTable = useMutateTable("entradas");
   const cofrinhosTable = useMutateTable("cofrinhos");
+  const lembretesTable = useMutateTable("lembretes");
 
   const [novaEntradaDesc, setNovaEntradaDesc] = useState("");
   const [novaEntradaValor, setNovaEntradaValor] = useState("");
+  const [novoCofrinho, setNovoCofrinho] = useState("");
+  const [novoCofrinhoMeta, setNovoCofrinhoMeta] = useState("");
+  const [novoLembrete, setNovoLembrete] = useState("");
+  const [novoLembreteValor, setNovoLembreteValor] = useState("");
+  const [novoLembreteData, setNovoLembreteData] = useState("");
 
   const doAno = gastos.filter((g) => new Date(g.data_compra).getFullYear() === ano);
   const doMes = doAno.filter((g) => new Date(g.data_compra).getMonth() === mes);
@@ -85,11 +92,17 @@ function Planilha() {
   });
 
   const totalMes = doMes.reduce((s, g) => s + g.valor, 0);
+  const comecoSemana = inicioDaSemana(agora);
+  const totalSemana = gastos
+    .filter((g) => new Date(g.data_compra) >= comecoSemana)
+    .reduce((s, g) => s + g.valor, 0);
   const totalEntradas = entradasMes.reduce((s, e) => s + e.valor, 0);
   const credito = doMes.filter((g) => g.pagamento === "Crédito").reduce((s, g) => s + g.valor, 0);
   const debito = totalMes - credito;
   const guardado = cofrinhos.reduce((s, c) => s + c.guardado, 0);
   const saldo = totalEntradas - totalMes;
+  const pendentes = lembretes.filter((l) => !l.concluido);
+
 
   const porCategoria = useMemo(
     () =>
