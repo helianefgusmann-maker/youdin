@@ -379,7 +379,9 @@ function Planilha() {
                 </span>
               </div>
             </article>
-          ))}
+            );
+          })}
+
           {!isLoading && doMes.length === 0 && (
             <p className="panel p-6 text-center text-xs text-muted-foreground">
               Nenhum gasto em {MESES[mes]} de {ano}.
