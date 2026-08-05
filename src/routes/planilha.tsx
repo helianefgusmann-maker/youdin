@@ -328,7 +328,10 @@ function Planilha() {
 
       {aba === "gastos" && (
         <section className="mt-4 space-y-2">
-          {doMes.map((g) => (
+          {doMes.map((g) => {
+            const partes = g.parcela?.split("/");
+            const totalParcelas = partes && partes.length === 2 ? Number(partes[1]) || 1 : 1;
+            return (
             <article key={g.id} className="panel p-3">
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <div className="min-w-0">
@@ -337,8 +340,16 @@ function Planilha() {
                     {dataHora(g.data_compra)}
                   </p>
                 </div>
-                <p className="num shrink-0 text-sm font-bold text-accent">{brl(g.valor)}</p>
+                <p className="shrink-0 text-right">
+                  <span className="num block text-sm font-bold text-accent">{brl(g.valor)}</span>
+                  {totalParcelas > 1 && (
+                    <span className="num block text-[10px] text-muted-foreground">
+                      {totalParcelas}x {brl(g.valor / totalParcelas)}
+                    </span>
+                  )}
+                </p>
               </div>
+
               <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
                 <span className="rounded-full border border-border px-2 py-0.5">{g.categoria}</span>
                 <span className="rounded-full border border-border px-2 py-0.5">{g.banco}</span>
