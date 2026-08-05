@@ -251,12 +251,29 @@ function Planilha() {
 
       {aba === "resumo" && (
         <section className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {pendentes.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAba("lembretes")}
+              className="panel flex w-full items-center justify-between gap-2 p-3 text-left text-xs"
+            >
+              <span className="truncate">
+                🔔 <span className="font-semibold">{pendentes.length}</span> pendência(s):{" "}
+                <span className="text-muted-foreground">
+                  {pendentes.map((l) => l.titulo).join(", ")}
+                </span>
+              </span>
+              <span className="shrink-0 font-semibold text-primary">ver →</span>
+            </button>
+          )}
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
             <Stat titulo="Entradas" valor={brl(totalEntradas)} cor="text-primary" />
-            <Stat titulo="Total gasto" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto no mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto na semana" valor={brl(totalSemana)} cor="text-accent" />
             <Stat titulo="Saldo" valor={brl(saldo)} cor={saldo < 0 ? "text-destructive" : "text-primary"} />
             <Stat titulo="Guardado" valor={brl(guardado)} cor="text-accent" />
           </div>
+
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="panel panel-glow p-4">
