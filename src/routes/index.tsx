@@ -9,8 +9,11 @@ import {
   brl,
   dataHora,
   detectarCategoria,
+  inicioDaSemana,
+  paraInputLocal,
 } from "@/lib/financas";
 import { useGastos, useMutateTable } from "@/lib/useFinancas";
+import { tocarSomDinheiro } from "@/lib/somDinheiro";
 import { ToggleTema } from "@/components/ToggleTema";
 
 export const Route = createFileRoute("/")({
@@ -28,6 +31,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Lance uma compra em segundos e veja tudo organizado na sua planilha financeira.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
@@ -35,7 +40,6 @@ export const Route = createFileRoute("/")({
 const campo =
   "w-full rounded-lg border border-border bg-[var(--surface-2)] px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary";
 const rotulo = "mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground";
-
 
 function RegistroRapido() {
   const { data: gastos = [] } = useGastos();
@@ -46,7 +50,8 @@ function RegistroRapido() {
   const [banco, setBanco] = useState<string>("NUBANK");
   const [pagamento, setPagamento] = useState<string>("Crédito");
   const [tipo, setTipo] = useState<string>("VARIÁVEL");
-  const [parcela, setParcela] = useState("");
+  const [parcelas, setParcelas] = useState("1");
+  const [quando, setQuando] = useState(() => paraInputLocal(new Date()));
   const [categoriaManual, setCategoriaManual] = useState<string | null>(null);
 
   const sugerida = useMemo(() => detectarCategoria(descricao), [descricao]);
@@ -57,17 +62,28 @@ function RegistroRapido() {
   );
   const bancosOrdenados = useMemo(() => [...BANCOS].sort((a, b) => a.localeCompare(b, "pt-BR")), []);
 
+  const numero = Number(valor.replace(/\./g, "").replace(",", ".")) || 0;
+  const qtdParcelas = Math.max(1, Math.min(48, Number(parcelas) || 1));
+  const valorParcela = numero / qtdParcelas;
 
   const hoje = new Date();
-  const gastosDoMes = gastos.filter((g) => {
-    const d = new Date(g.data_compra);
-    return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
-  });
-  const totalMes = gastosDoMes.reduce((s, g) => s + g.valor, 0);
+  const totalMes = gastos
+    .filter((g) => {
+      const d = new Date(g.data_compra);
+      return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+    })
+    .reduce((s, g) => s + g.valor, 0);
+
+  const comecoSemana = inicioDaSemana(hoje);
+  const totalSemana = gastos
+    .filter((g) => new Date(g.data_compra) >= comecoSemana)
+    .reduce((s, g) => s + g.valor, 0);
+
+  const seteDias = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const recentes = gastos.filter((g) => new Date(g.data_compra) >= seteDias);
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
-    const numero = Number(valor.replace(/\./g, "").replace(",", "."));
     if (!descricao.trim()) {
       toast.error("Escreva o que você comprou.");
       return;
@@ -77,6 +93,7 @@ function RegistroRapido() {
       return;
     }
 
+    const data = quando ? new Date(quando) : new Date();
 
     try {
       await insert.mutateAsync({
@@ -86,14 +103,20 @@ function RegistroRapido() {
         valor: numero,
         pagamento,
         tipo,
-        parcela: parcela.trim() || null,
+        parcela: qtdParcelas > 1 ? `01/${String(qtdParcelas).padStart(2, "0")}` : null,
         pago: pagamento !== "Crédito",
-        data_compra: new Date().toISOString(),
+        data_compra: data.toISOString(),
       });
-      toast.success(`${brl(numero)} em ${categoria} registrado!`);
+      tocarSomDinheiro();
+      toast.success(
+        qtdParcelas > 1
+          ? `${brl(numero)} em ${categoria} — ${qtdParcelas}x de ${brl(valorParcela)}`
+          : `${brl(numero)} em ${categoria} registrado!`,
+      );
       setValor("");
       setDescricao("");
-      setParcela("");
+      setParcelas("1");
+      setQuando(paraInputLocal(new Date()));
       setCategoriaManual(null);
     } catch {
       toast.error("Não consegui salvar. Tente de novo.");
@@ -122,7 +145,26 @@ function RegistroRapido() {
         </div>
       </header>
 
-      <form onSubmit={salvar} className="panel mt-4 p-4">
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="panel p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Esta semana
+          </p>
+          <p className="num mt-1 truncate text-base font-bold text-primary sm:text-lg">
+            {brl(totalSemana)}
+          </p>
+        </div>
+        <div className="panel p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Este mês
+          </p>
+          <p className="num mt-1 truncate text-base font-bold text-accent sm:text-lg">
+            {brl(totalMes)}
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={salvar} className="panel mt-3 p-4">
         <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--surface-2)] px-3 focus-within:border-primary">
           <span className="num text-lg text-muted-foreground">R$</span>
           <input
@@ -208,12 +250,7 @@ function RegistroRapido() {
             <label className={rotulo} htmlFor="tipo">
               Tipo
             </label>
-            <select
-              id="tipo"
-              value={tipo}
-              onChange={(e) => setTipo(e.target.value)}
-              className={campo}
-            >
+            <select id="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} className={campo}>
               {TIPOS.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -221,19 +258,45 @@ function RegistroRapido() {
               ))}
             </select>
           </div>
-          <div className="col-span-2">
-            <label className={rotulo} htmlFor="parcela">
-              Parcela (opcional)
+          <div>
+            <label className={rotulo} htmlFor="parcelas">
+              Parcelas
+            </label>
+            <select
+              id="parcelas"
+              value={parcelas}
+              onChange={(e) => setParcelas(e.target.value)}
+              className={`${campo} num`}
+            >
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}x
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={rotulo} htmlFor="quando">
+              Data e hora
             </label>
             <input
-              id="parcela"
-              value={parcela}
-              onChange={(e) => setParcela(e.target.value)}
-              placeholder="ex: 03/12"
-              className={campo}
+              id="quando"
+              type="datetime-local"
+              value={quando}
+              onChange={(e) => setQuando(e.target.value)}
+              className={`${campo} num`}
             />
           </div>
         </div>
+
+        {qtdParcelas > 1 && numero > 0 && (
+          <p className="num mt-3 rounded-lg border border-border bg-[var(--surface-2)] px-3 py-2 text-center text-xs">
+            <span className="font-bold text-primary">
+              {qtdParcelas}x de {brl(valorParcela)}
+            </span>{" "}
+            <span className="text-muted-foreground">· total {brl(numero)}</span>
+          </p>
+        )}
 
         <button
           type="submit"
@@ -246,30 +309,42 @@ function RegistroRapido() {
 
       <section className="mt-5">
         <div className="mb-2 flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-bold">Últimos lançamentos</h2>
+          <h2 className="text-sm font-bold">Últimos 7 dias</h2>
           <span className="num text-xs text-muted-foreground">
-            Mês: <span className="font-semibold text-accent">{brl(totalMes)}</span>
+            <span className="font-semibold text-accent">
+              {brl(recentes.reduce((s, g) => s + g.valor, 0))}
+            </span>
           </span>
         </div>
 
         <ul className="space-y-1.5">
-          {gastos.slice(0, 6).map((g) => (
-            <li key={g.id} className="panel flex items-center justify-between gap-3 px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{g.descricao}</p>
-                <p className="truncate text-[10px] text-muted-foreground">
-                  {g.categoria} · {g.banco} · {dataHora(g.data_compra)}
-                </p>
-              </div>
-              <span className="num shrink-0 text-sm font-semibold">{brl(g.valor)}</span>
-            </li>
-          ))}
-          {gastos.length === 0 && (
+          {recentes.map((g) => {
+            const partes = g.parcela?.split("/");
+            const total = partes && partes.length === 2 ? Number(partes[1]) : 1;
+            return (
+              <li key={g.id} className="panel flex items-center justify-between gap-3 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{g.descricao}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {g.categoria} · {g.banco} · {dataHora(g.data_compra)}
+                  </p>
+                </div>
+                <span className="shrink-0 text-right">
+                  <span className="num block text-sm font-semibold">{brl(g.valor)}</span>
+                  {total > 1 && (
+                    <span className="num block text-[10px] text-muted-foreground">
+                      {total}x {brl(g.valor / total)}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+          {recentes.length === 0 && (
             <li className="panel px-4 py-5 text-center text-xs text-muted-foreground">
-              Nenhum gasto registrado ainda.
+              Nenhum gasto nos últimos 7 dias.
             </li>
           )}
-
         </ul>
       </section>
     </main>
