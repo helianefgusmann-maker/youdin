@@ -157,6 +157,40 @@ function Planilha() {
     toast.success("Entrada adicionada.");
   }
 
+  async function addCofrinho(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novoCofrinho.trim()) {
+      toast.error("Dê um nome ao cofrinho.");
+      return;
+    }
+    await cofrinhosTable.insert.mutateAsync({
+      nome: novoCofrinho.trim(),
+      meta: Number(novoCofrinhoMeta.replace(/\./g, "").replace(",", ".")) || 0,
+      guardado: 0,
+    });
+    setNovoCofrinho("");
+    setNovoCofrinhoMeta("");
+    toast.success("Cofrinho criado.");
+  }
+
+  async function addLembrete(e: React.FormEvent) {
+    e.preventDefault();
+    if (!novoLembrete.trim()) {
+      toast.error("Escreva o lembrete.");
+      return;
+    }
+    await lembretesTable.insert.mutateAsync({
+      titulo: novoLembrete.trim(),
+      valor: Number(novoLembreteValor.replace(/\./g, "").replace(",", ".")) || 0,
+      vence_em: novoLembreteData || null,
+    });
+    setNovoLembrete("");
+    setNovoLembreteValor("");
+    setNovoLembreteData("");
+    toast.success("Lembrete criado.");
+  }
+
+
   return (
     <main className="mx-auto w-full max-w-5xl px-3 pb-16 pt-5 sm:px-5 sm:pt-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
