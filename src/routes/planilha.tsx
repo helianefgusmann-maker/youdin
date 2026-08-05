@@ -432,10 +432,42 @@ function Planilha() {
             <span className="text-muted-foreground">Total guardado</span>
             <span className="num font-bold text-accent">{brl(guardado)}</span>
           </div>
+          <form onSubmit={addCofrinho} className="panel grid grid-cols-[minmax(0,1fr)_5rem_auto] gap-2 p-3">
+            <input
+              value={novoCofrinho}
+              onChange={(ev) => setNovoCofrinho(ev.target.value)}
+              placeholder="Novo cofrinho (ex: Viagem)"
+              className={campo}
+            />
+            <input
+              value={novoCofrinhoMeta}
+              onChange={(ev) => setNovoCofrinhoMeta(ev.target.value)}
+              inputMode="decimal"
+              placeholder="Meta"
+              className={`${campo} num`}
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground"
+            >
+              +
+            </button>
+          </form>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {cofrinhos.map((c) => (
               <div key={c.id} className="panel p-3">
-                <p className="mb-2 truncate text-sm font-semibold">{c.nome}</p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold">{c.nome}</p>
+                  <button
+                    type="button"
+                    onClick={() => cofrinhosTable.remove.mutate(c.id)}
+                    className="shrink-0 text-muted-foreground transition hover:text-destructive"
+                    aria-label={`Remover cofrinho ${c.nome}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
                     Meta
