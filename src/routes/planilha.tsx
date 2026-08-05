@@ -510,6 +510,100 @@ function Planilha() {
         </section>
       )}
 
+      {aba === "lembretes" && (
+        <section className="panel mt-4 p-4">
+          <h2 className="mb-1 text-sm font-bold">Lembretes e pendências</h2>
+          <p className="mb-3 text-[10px] text-muted-foreground">
+            {pendentes.length} pendente(s) de {lembretes.length}
+          </p>
+          <form onSubmit={addLembrete} className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_9rem_auto]">
+            <input
+              value={novoLembrete}
+              onChange={(ev) => setNovoLembrete(ev.target.value)}
+              placeholder="Ex: pagar fatura do Nubank"
+              className={campo}
+            />
+            <input
+              value={novoLembreteValor}
+              onChange={(ev) => setNovoLembreteValor(ev.target.value)}
+              inputMode="decimal"
+              placeholder="Valor"
+              className={`${campo} num`}
+            />
+            <input
+              type="date"
+              value={novoLembreteData}
+              onChange={(ev) => setNovoLembreteData(ev.target.value)}
+              className={`${campo} num`}
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground"
+            >
+              +
+            </button>
+          </form>
+
+          <ul className="space-y-2 text-xs">
+            {lembretes.map((l) => {
+              const atrasado =
+                !l.concluido && !!l.vence_em && new Date(`${l.vence_em}T23:59:59`) < agora;
+              return (
+                <li
+                  key={l.id}
+                  className="flex items-center gap-2 border-b border-border/50 pb-2 last:border-0"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      lembretesTable.update.mutate({
+                        id: l.id,
+                        values: { concluido: !l.concluido },
+                      })
+                    }
+                    className={l.concluido ? "text-primary" : "text-muted-foreground"}
+                    aria-label="Marcar como concluído"
+                  >
+                    {l.concluido ? "✅" : "⬜"}
+                  </button>
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block truncate ${l.concluido ? "text-muted-foreground line-through" : "font-semibold"}`}
+                    >
+                      {l.titulo}
+                    </span>
+                    {l.vence_em && (
+                      <span
+                        className={`num block text-[10px] ${atrasado ? "text-destructive" : "text-muted-foreground"}`}
+                      >
+                        vence {new Date(`${l.vence_em}T12:00:00`).toLocaleDateString("pt-BR")}
+                        {atrasado ? " · atrasado" : ""}
+                      </span>
+                    )}
+                  </span>
+                  {l.valor > 0 && (
+                    <span className="num shrink-0 font-semibold text-accent">{brl(l.valor)}</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => lembretesTable.remove.mutate(l.id)}
+                    className="shrink-0 text-muted-foreground transition hover:text-destructive"
+                    aria-label="Excluir lembrete"
+                  >
+                    ✕
+                  </button>
+                </li>
+              );
+            })}
+            {lembretes.length === 0 && (
+              <li className="text-muted-foreground">Nenhum lembrete por aqui.</li>
+            )}
+          </ul>
+        </section>
+      )}
+
+
+
       {aba === "anual" && (
         <section className="panel panel-glow mt-4 p-4">
           <h2 className="mb-1 text-sm font-bold">Resumo anual {ano}</h2>
