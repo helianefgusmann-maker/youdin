@@ -152,3 +152,28 @@ export type Cofrinho = {
   meta: number;
   guardado: number;
 };
+
+export type Lembrete = {
+  id: string;
+  titulo: string;
+  valor: number;
+  vence_em: string | null;
+  concluido: boolean;
+  created_at: string;
+};
+
+/** Início da semana (segunda-feira) para a data informada. */
+export function inicioDaSemana(base = new Date()) {
+  const d = new Date(base);
+  d.setHours(0, 0, 0, 0);
+  const diaSemana = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - diaSemana);
+  return d;
+}
+
+/** Converte uma Date para o formato aceito por <input type="datetime-local">. */
+export function paraInputLocal(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
