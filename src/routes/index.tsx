@@ -170,6 +170,8 @@ function RegistroRapido() {
       setParcelas("1");
       setQuando(paraInputLocal(new Date()));
       setCategoriaManual(null);
+      setNotaDetectada(null);
+
     } catch {
       toast.error("Não consegui salvar. Tente de novo.");
     }
