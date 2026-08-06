@@ -93,6 +93,47 @@ function RegistroRapido() {
   const seteDias = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
   const recentes = gastos.filter((g) => new Date(g.data_compra) >= seteDias);
 
+  async function escanearNota(arquivo: File) {
+    setLendoNota(true);
+    setNotaDetectada(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => resolve(String(leitor.result));
+        leitor.onerror = () => reject(new Error("falha ao ler arquivo"));
+        leitor.readAsDataURL(arquivo);
+      });
+
+      const lida = await executarLerNota({
+        data: { imagem: dataUrl, mime: arquivo.type || "image/jpeg" },
+      });
+
+      if (!lida.valor && !lida.descricao) {
+        toast.error("Não consegui identificar os dados dessa nota. Tente outra foto.");
+        return;
+      }
+
+      if (lida.valor) setValor(numeroParaMascara(lida.valor));
+      if (lida.descricao) setDescricao(lida.descricao);
+      setCategoriaManual(lida.categoria);
+      if (lida.banco) setBanco(lida.banco);
+      if (lida.pagamento) setPagamento(lida.pagamento);
+      setParcelas(String(lida.parcelas));
+      if (lida.data && !Number.isNaN(new Date(lida.data).getTime())) {
+        setQuando(paraInputLocal(new Date(lida.data)));
+      }
+      setNotaDetectada(
+        `${lida.descricao || "Compra"} · ${brl(lida.valor)}${lida.parcelas > 1 ? ` · ${lida.parcelas}x` : ""}`,
+      );
+      toast.success("Nota lida! Confira os dados antes de confirmar.");
+    } catch {
+      toast.error("Não consegui ler a nota. Tente novamente.");
+    } finally {
+      setLendoNota(false);
+    }
+  }
+
+
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     if (!descricao.trim()) {
