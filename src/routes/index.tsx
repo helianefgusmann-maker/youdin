@@ -218,19 +218,65 @@ function RegistroRapido() {
         </div>
       </div>
 
+      <div className="mt-3">
+        <input
+          ref={inputArquivo}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const arquivo = e.target.files?.[0];
+            e.target.value = "";
+            if (arquivo) void escanearNota(arquivo);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputArquivo.current?.click()}
+          disabled={lendoNota}
+          className="panel flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-bold transition hover:border-primary hover:text-primary disabled:opacity-60"
+        >
+          {lendoNota ? "Lendo a nota..." : "📷 Escanear nota com a câmera"}
+        </button>
+      </div>
+
       <form onSubmit={salvar} className="panel mt-3 p-4">
+        {notaDetectada && (
+          <div className="mb-3 rounded-xl border border-primary/50 bg-[var(--surface-2)] p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+              Detectado na nota — confira e ajuste
+            </p>
+            <p className="num mt-1 truncate text-sm font-semibold">{notaDetectada}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setNotaDetectada(null);
+                setValor("");
+                setDescricao("");
+                setParcelas("1");
+                setCategoriaManual(null);
+                setQuando(paraInputLocal(new Date()));
+              }}
+              className="mt-2 text-[11px] font-semibold text-muted-foreground underline transition hover:text-destructive"
+            >
+              Está errado, limpar tudo
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--surface-2)] px-3 focus-within:border-primary">
           <span className="num text-lg text-muted-foreground">R$</span>
           <input
             id="valor"
-            inputMode="decimal"
+            inputMode="numeric"
             value={valor}
-            onChange={(e) => setValor(e.target.value)}
+            onChange={(e) => setValor(mascaraMoeda(e.target.value))}
             placeholder="0,00"
             aria-label="Valor"
             className="num w-full bg-transparent py-2.5 text-2xl font-semibold outline-none placeholder:text-muted-foreground/50"
           />
         </div>
+
 
         <div className="mt-3">
           <label className={rotulo} htmlFor="descricao">
