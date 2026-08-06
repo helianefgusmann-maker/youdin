@@ -612,8 +612,9 @@ function Planilha() {
             />
             <input
               value={novoLembreteValor}
-              onChange={(ev) => setNovoLembreteValor(ev.target.value)}
-              inputMode="decimal"
+              onChange={(ev) => setNovoLembreteValor(mascaraMoeda(ev.target.value))}
+              inputMode="numeric"
+
               placeholder="Valor"
               className={`${campo} num`}
             />
