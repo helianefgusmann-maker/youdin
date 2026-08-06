@@ -121,6 +121,34 @@ export function detectarCategoria(descricao: string): Categoria {
 export const brl = (valor: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valor || 0);
 
+/** Máscara de digitação: "1234" -> "12,34"; "123456" -> "1.234,56". */
+export function mascaraMoeda(texto: string) {
+  const digitos = texto.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 11);
+  if (!digitos) return "";
+  return (Number(digitos) / 100).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Converte um valor mascarado ("1.234,56") em número (1234.56). */
+export function valorNumerico(texto: string) {
+  const digitos = texto.replace(/\D/g, "");
+  return digitos ? Number(digitos) / 100 : 0;
+}
+
+/** Converte um número em texto mascarado ("1.234,56"). */
+export function numeroParaMascara(valor: number) {
+  return mascaraMoeda(String(Math.round((valor || 0) * 100)));
+}
+
+/** Converte uma Date para o formato de <input type="date">. */
+export function paraInputData(d: Date) {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+
 export const dataHora = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 

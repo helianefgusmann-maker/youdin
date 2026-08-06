@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   BANCOS,
@@ -10,11 +11,16 @@ import {
   dataHora,
   detectarCategoria,
   inicioDaSemana,
+  mascaraMoeda,
+  numeroParaMascara,
   paraInputLocal,
+  valorNumerico,
 } from "@/lib/financas";
 import { useGastos, useMutateTable } from "@/lib/useFinancas";
+import { lerNota } from "@/lib/nota.functions";
 import { tocarSomDinheiro } from "@/lib/somDinheiro";
 import { ToggleTema } from "@/components/ToggleTema";
+
 
 export const Route = createFileRoute("/")({
   component: RegistroRapido,
@@ -53,6 +59,10 @@ function RegistroRapido() {
   const [parcelas, setParcelas] = useState("1");
   const [quando, setQuando] = useState(() => paraInputLocal(new Date()));
   const [categoriaManual, setCategoriaManual] = useState<string | null>(null);
+  const [lendoNota, setLendoNota] = useState(false);
+  const [notaDetectada, setNotaDetectada] = useState<string | null>(null);
+  const inputArquivo = useRef<HTMLInputElement | null>(null);
+  const executarLerNota = useServerFn(lerNota);
 
   const sugerida = useMemo(() => detectarCategoria(descricao), [descricao]);
   const categoria = categoriaManual ?? sugerida;
@@ -62,7 +72,8 @@ function RegistroRapido() {
   );
   const bancosOrdenados = useMemo(() => [...BANCOS].sort((a, b) => a.localeCompare(b, "pt-BR")), []);
 
-  const numero = Number(valor.replace(/\./g, "").replace(",", ".")) || 0;
+  const numero = valorNumerico(valor);
+
   const qtdParcelas = Math.max(1, Math.min(48, Number(parcelas) || 1));
   const valorParcela = numero / qtdParcelas;
 
@@ -81,6 +92,47 @@ function RegistroRapido() {
 
   const seteDias = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
   const recentes = gastos.filter((g) => new Date(g.data_compra) >= seteDias);
+
+  async function escanearNota(arquivo: File) {
+    setLendoNota(true);
+    setNotaDetectada(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => resolve(String(leitor.result));
+        leitor.onerror = () => reject(new Error("falha ao ler arquivo"));
+        leitor.readAsDataURL(arquivo);
+      });
+
+      const lida = await executarLerNota({
+        data: { imagem: dataUrl, mime: arquivo.type || "image/jpeg" },
+      });
+
+      if (!lida.valor && !lida.descricao) {
+        toast.error("Não consegui identificar os dados dessa nota. Tente outra foto.");
+        return;
+      }
+
+      if (lida.valor) setValor(numeroParaMascara(lida.valor));
+      if (lida.descricao) setDescricao(lida.descricao);
+      setCategoriaManual(lida.categoria);
+      if (lida.banco) setBanco(lida.banco);
+      if (lida.pagamento) setPagamento(lida.pagamento);
+      setParcelas(String(lida.parcelas));
+      if (lida.data && !Number.isNaN(new Date(lida.data).getTime())) {
+        setQuando(paraInputLocal(new Date(lida.data)));
+      }
+      setNotaDetectada(
+        `${lida.descricao || "Compra"} · ${brl(lida.valor)}${lida.parcelas > 1 ? ` · ${lida.parcelas}x` : ""}`,
+      );
+      toast.success("Nota lida! Confira os dados antes de confirmar.");
+    } catch {
+      toast.error("Não consegui ler a nota. Tente novamente.");
+    } finally {
+      setLendoNota(false);
+    }
+  }
+
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +170,8 @@ function RegistroRapido() {
       setParcelas("1");
       setQuando(paraInputLocal(new Date()));
       setCategoriaManual(null);
+      setNotaDetectada(null);
+
     } catch {
       toast.error("Não consegui salvar. Tente de novo.");
     }
@@ -164,19 +218,65 @@ function RegistroRapido() {
         </div>
       </div>
 
+      <div className="mt-3">
+        <input
+          ref={inputArquivo}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const arquivo = e.target.files?.[0];
+            e.target.value = "";
+            if (arquivo) void escanearNota(arquivo);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => inputArquivo.current?.click()}
+          disabled={lendoNota}
+          className="panel flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-bold transition hover:border-primary hover:text-primary disabled:opacity-60"
+        >
+          {lendoNota ? "Lendo a nota..." : "📷 Escanear nota com a câmera"}
+        </button>
+      </div>
+
       <form onSubmit={salvar} className="panel mt-3 p-4">
+        {notaDetectada && (
+          <div className="mb-3 rounded-xl border border-primary/50 bg-[var(--surface-2)] p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+              Detectado na nota — confira e ajuste
+            </p>
+            <p className="num mt-1 truncate text-sm font-semibold">{notaDetectada}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setNotaDetectada(null);
+                setValor("");
+                setDescricao("");
+                setParcelas("1");
+                setCategoriaManual(null);
+                setQuando(paraInputLocal(new Date()));
+              }}
+              className="mt-2 text-[11px] font-semibold text-muted-foreground underline transition hover:text-destructive"
+            >
+              Está errado, limpar tudo
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--surface-2)] px-3 focus-within:border-primary">
           <span className="num text-lg text-muted-foreground">R$</span>
           <input
             id="valor"
-            inputMode="decimal"
+            inputMode="numeric"
             value={valor}
-            onChange={(e) => setValor(e.target.value)}
+            onChange={(e) => setValor(mascaraMoeda(e.target.value))}
             placeholder="0,00"
             aria-label="Valor"
             className="num w-full bg-transparent py-2.5 text-2xl font-semibold outline-none placeholder:text-muted-foreground/50"
           />
         </div>
+
 
         <div className="mt-3">
           <label className={rotulo} htmlFor="descricao">
