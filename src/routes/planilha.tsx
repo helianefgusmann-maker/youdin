@@ -118,6 +118,14 @@ function Planilha() {
   const saldo = totalEntradas - totalMes;
   const pendentes = lembretes.filter((l) => !l.concluido);
 
+  /** Ordem fixa para os cofrinhos não trocarem de posição ao editar. */
+  const cofrinhosOrdenados = useMemo(
+    () => [...cofrinhos].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR") || a.id.localeCompare(b.id)),
+    [cofrinhos],
+  );
+
+
+
 
   const porCategoria = useMemo(
     () =>
