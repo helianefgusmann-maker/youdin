@@ -59,6 +59,10 @@ function RegistroRapido() {
   const [parcelas, setParcelas] = useState("1");
   const [quando, setQuando] = useState(() => paraInputLocal(new Date()));
   const [categoriaManual, setCategoriaManual] = useState<string | null>(null);
+  const [lendoNota, setLendoNota] = useState(false);
+  const [notaDetectada, setNotaDetectada] = useState<string | null>(null);
+  const inputArquivo = useRef<HTMLInputElement | null>(null);
+  const executarLerNota = useServerFn(lerNota);
 
   const sugerida = useMemo(() => detectarCategoria(descricao), [descricao]);
   const categoria = categoriaManual ?? sugerida;
@@ -68,7 +72,8 @@ function RegistroRapido() {
   );
   const bancosOrdenados = useMemo(() => [...BANCOS].sort((a, b) => a.localeCompare(b, "pt-BR")), []);
 
-  const numero = Number(valor.replace(/\./g, "").replace(",", ".")) || 0;
+  const numero = valorNumerico(valor);
+
   const qtdParcelas = Math.max(1, Math.min(48, Number(parcelas) || 1));
   const valorParcela = numero / qtdParcelas;
 
