@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   BANCOS,
@@ -10,11 +11,16 @@ import {
   dataHora,
   detectarCategoria,
   inicioDaSemana,
+  mascaraMoeda,
+  numeroParaMascara,
   paraInputLocal,
+  valorNumerico,
 } from "@/lib/financas";
 import { useGastos, useMutateTable } from "@/lib/useFinancas";
+import { lerNota } from "@/lib/nota.functions";
 import { tocarSomDinheiro } from "@/lib/somDinheiro";
 import { ToggleTema } from "@/components/ToggleTema";
+
 
 export const Route = createFileRoute("/")({
   component: RegistroRapido,
