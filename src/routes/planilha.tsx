@@ -154,16 +154,17 @@ function Planilha() {
 
   async function addEntrada(e: React.FormEvent) {
     e.preventDefault();
-    const numero = Number(novaEntradaValor.replace(/\./g, "").replace(",", "."));
+    const numero = valorNumerico(novaEntradaValor);
     if (!numero) {
       toast.error("Informe o valor da entrada.");
       return;
     }
+    const dia = novaEntradaData || paraInputData(new Date());
     await entradasTable.insert.mutateAsync({
       descricao: novaEntradaDesc.trim() || "Entrada",
       tipo: "Entrada",
       valor: numero,
-      data_ref: `${ano}-${String(mes + 1).padStart(2, "0")}-01`,
+      data_ref: dia,
     });
     setNovaEntradaDesc("");
     setNovaEntradaValor("");
@@ -178,7 +179,7 @@ function Planilha() {
     }
     await cofrinhosTable.insert.mutateAsync({
       nome: novoCofrinho.trim(),
-      meta: Number(novoCofrinhoMeta.replace(/\./g, "").replace(",", ".")) || 0,
+      meta: valorNumerico(novoCofrinhoMeta),
       guardado: 0,
     });
     setNovoCofrinho("");
@@ -194,7 +195,7 @@ function Planilha() {
     }
     await lembretesTable.insert.mutateAsync({
       titulo: novoLembrete.trim(),
-      valor: Number(novoLembreteValor.replace(/\./g, "").replace(",", ".")) || 0,
+      valor: valorNumerico(novoLembreteValor),
       vence_em: novoLembreteData || null,
     });
     setNovoLembrete("");
@@ -202,6 +203,7 @@ function Planilha() {
     setNovoLembreteData("");
     toast.success("Lembrete criado.");
   }
+
 
 
   return (
