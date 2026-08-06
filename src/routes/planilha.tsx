@@ -89,6 +89,8 @@ function Planilha() {
 
   const [novaEntradaDesc, setNovaEntradaDesc] = useState("");
   const [novaEntradaValor, setNovaEntradaValor] = useState("");
+  const [novaEntradaData, setNovaEntradaData] = useState(() => paraInputData(new Date()));
+
   const [novoCofrinho, setNovoCofrinho] = useState("");
   const [novoCofrinhoMeta, setNovoCofrinhoMeta] = useState("");
   const [novoLembrete, setNovoLembrete] = useState("");
