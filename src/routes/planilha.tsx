@@ -421,7 +421,12 @@ function Planilha() {
                 key={e.id}
                 className="flex items-center justify-between gap-2 border-b border-border/50 pb-2 last:border-0"
               >
-                <span className="truncate">{e.descricao}</span>
+                <span className="min-w-0">
+                  <span className="block truncate">{e.descricao}</span>
+                  <span className="num block text-[10px] text-muted-foreground">
+                    recebido em {new Date(`${e.data_ref}T12:00:00`).toLocaleDateString("pt-BR")}
+                  </span>
+                </span>
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="num font-semibold text-primary">{brl(e.valor)}</span>
                   <button
@@ -437,7 +442,7 @@ function Planilha() {
             ))}
             {entradasMes.length === 0 && <li className="text-muted-foreground">Nenhuma entrada.</li>}
           </ul>
-          <form onSubmit={addEntrada} className="grid grid-cols-[minmax(0,1fr)_5rem_auto] gap-2">
+          <form onSubmit={addEntrada} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_9rem_auto]">
             <input
               value={novaEntradaDesc}
               onChange={(ev) => setNovaEntradaDesc(ev.target.value)}
@@ -446,14 +451,21 @@ function Planilha() {
             />
             <input
               value={novaEntradaValor}
-              onChange={(ev) => setNovaEntradaValor(ev.target.value)}
-              inputMode="decimal"
+              onChange={(ev) => setNovaEntradaValor(mascaraMoeda(ev.target.value))}
+              inputMode="numeric"
               placeholder="0,00"
+              className={`${campo} num`}
+            />
+            <input
+              type="date"
+              value={novaEntradaData}
+              onChange={(ev) => setNovaEntradaData(ev.target.value)}
+              aria-label="Dia em que recebi"
               className={`${campo} num`}
             />
             <button
               type="submit"
-              className="rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground"
+              className="rounded-lg bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground"
             >
               +
             </button>
@@ -467,7 +479,7 @@ function Planilha() {
             <span className="text-muted-foreground">Total guardado</span>
             <span className="num font-bold text-accent">{brl(guardado)}</span>
           </div>
-          <form onSubmit={addCofrinho} className="panel grid grid-cols-[minmax(0,1fr)_5rem_auto] gap-2 p-3">
+          <form onSubmit={addCofrinho} className="panel grid grid-cols-[minmax(0,1fr)_6rem_auto] gap-2 p-3">
             <input
               value={novoCofrinho}
               onChange={(ev) => setNovoCofrinho(ev.target.value)}
@@ -476,8 +488,8 @@ function Planilha() {
             />
             <input
               value={novoCofrinhoMeta}
-              onChange={(ev) => setNovoCofrinhoMeta(ev.target.value)}
-              inputMode="decimal"
+              onChange={(ev) => setNovoCofrinhoMeta(mascaraMoeda(ev.target.value))}
+              inputMode="numeric"
               placeholder="Meta"
               className={`${campo} num`}
             />
@@ -488,60 +500,90 @@ function Planilha() {
               +
             </button>
           </form>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cofrinhos.map((c) => (
-              <div key={c.id} className="panel p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-semibold">{c.nome}</p>
-                  <button
-                    type="button"
-                    onClick={() => cofrinhosTable.remove.mutate(c.id)}
-                    className="shrink-0 text-muted-foreground transition hover:text-destructive"
-                    aria-label={`Remover cofrinho ${c.nome}`}
-                  >
-                    ✕
-                  </button>
-                </div>
+          <div className="space-y-3">
+            {cofrinhosOrdenados.map((c) => {
+              const pct = c.meta > 0 ? (c.guardado / c.meta) * 100 : 0;
+              return (
+                <div key={c.id} className="panel p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold">{c.nome}</p>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="num text-sm font-bold text-accent">
+                        {pct.toFixed(0)}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Remover o cofrinho "${c.nome}"?`))
+                            cofrinhosTable.remove.mutate(c.id);
+                        }}
+                        className="text-muted-foreground transition hover:text-destructive"
+                        aria-label={`Remover cofrinho ${c.nome}`}
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Meta
-                    <input
-                      defaultValue={c.meta}
-                      inputMode="decimal"
-                      onBlur={(e) =>
-                        cofrinhosTable.update.mutate({
-                          id: c.id,
-                          values: { meta: Number(e.target.value.replace(",", ".")) || 0 },
-                        })
-                      }
-                      className={`${campo} num mt-1`}
-                    />
-                  </label>
-                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Guardado
-                    <input
-                      defaultValue={c.guardado}
-                      inputMode="decimal"
-                      onBlur={(e) =>
-                        cofrinhosTable.update.mutate({
-                          id: c.id,
-                          values: { guardado: Number(e.target.value.replace(",", ".")) || 0 },
-                        })
-                      }
-                      className={`${campo} num mt-1`}
-                    />
-                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Meta
+                      <input
+                        key={`meta-${c.id}`}
+                        defaultValue={numeroParaMascara(c.meta)}
+                        inputMode="numeric"
+                        onChange={(e) => {
+                          e.target.value = mascaraMoeda(e.target.value);
+                        }}
+                        onBlur={(e) =>
+                          cofrinhosTable.update.mutate({
+                            id: c.id,
+                            values: { meta: valorNumerico(e.target.value) },
+                          })
+                        }
+                        className={`${campo} num mt-1`}
+                      />
+                    </label>
+                    <label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Guardado
+                      <input
+                        key={`guardado-${c.id}`}
+                        defaultValue={numeroParaMascara(c.guardado)}
+                        inputMode="numeric"
+                        onChange={(e) => {
+                          e.target.value = mascaraMoeda(e.target.value);
+                        }}
+                        onBlur={(e) =>
+                          cofrinhosTable.update.mutate({
+                            id: c.id,
+                            values: { guardado: valorNumerico(e.target.value) },
+                          })
+                        }
+                        className={`${campo} num mt-1`}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
+                      <div
+                        className="h-full rounded-full bg-accent transition-[width]"
+                        style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                      />
+                    </div>
+                    <span className="num shrink-0 text-[10px] text-muted-foreground">
+                      {brl(c.guardado)} / {brl(c.meta)}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-3 h-1 overflow-hidden rounded-full bg-[var(--surface-2)]">
-                  <div
-                    className="h-full rounded-full bg-accent"
-                    style={{ width: `${c.meta ? Math.min(100, (c.guardado / c.meta) * 100) : 0}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
+            {cofrinhosOrdenados.length === 0 && (
+              <p className="panel p-6 text-center text-xs text-muted-foreground">
+                Nenhum cofrinho ainda.
+              </p>
+            )}
           </div>
+
         </section>
       )}
 
