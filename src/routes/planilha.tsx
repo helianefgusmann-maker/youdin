@@ -1,7 +1,18 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { BANCOS, CATEGORIAS, MESES, brl, dataHora, inicioDaSemana } from "@/lib/financas";
+import {
+  BANCOS,
+  CATEGORIAS,
+  MESES,
+  brl,
+  dataHora,
+  inicioDaSemana,
+  mascaraMoeda,
+  paraInputData,
+  valorNumerico,
+} from "@/lib/financas";
+
 import {
   useCofrinhos,
   useEntradas,
