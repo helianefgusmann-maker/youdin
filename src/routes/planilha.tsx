@@ -374,25 +374,32 @@ function Planilha() {
                     {g.parcela}
                   </span>
                 )}
-                <span className="ml-auto flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => gastosTable.update.mutate({ id: g.id, values: { pago: !g.pago } })}
-                    className={g.pago ? "text-primary" : "text-muted-foreground"}
-                    aria-label="Marcar como pago"
-                  >
-                    {g.pago ? "✅" : "⬜"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => gastosTable.remove.mutate(g.id)}
-                    className="text-muted-foreground transition hover:text-destructive"
-                    aria-label="Excluir gasto"
-                  >
-                    ✕
-                  </button>
-                </span>
               </div>
+
+              <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <button
+                  type="button"
+                  onClick={() => gastosTable.update.mutate({ id: g.id, values: { pago: !g.pago } })}
+                  className={`rounded-xl px-3 py-2.5 text-xs font-bold transition ${
+                    g.pago
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-[var(--surface-2)] text-muted-foreground hover:border-primary hover:text-primary"
+                  }`}
+                >
+                  {g.pago ? "✅ Pago" : "Marcar como pago"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm(`Excluir "${g.descricao}"?`)) gastosTable.remove.mutate(g.id);
+                  }}
+                  className="rounded-xl border border-border px-4 py-2.5 text-xs font-bold text-muted-foreground transition hover:border-destructive hover:text-destructive"
+                  aria-label={`Excluir ${g.descricao}`}
+                >
+                  Excluir
+                </button>
+              </div>
+
             </article>
             );
           })}
