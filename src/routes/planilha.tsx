@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   BANCOS,
@@ -22,8 +23,11 @@ import {
   useLembretes,
   useMutateTable,
 } from "@/lib/useFinancas";
+import { pedirConselho } from "@/lib/conselho.functions";
+import { PAGAMENTOS } from "@/lib/financas";
 import { ToggleTema } from "@/components/ToggleTema";
 import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
+
 
 
 export const Route = createFileRoute("/planilha")({
