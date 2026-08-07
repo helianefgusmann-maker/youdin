@@ -426,7 +426,76 @@ function Planilha() {
 
       {aba === "gastos" && (
         <section className="mt-4 space-y-2">
-          {doMes.map((g) => {
+          <div className="panel space-y-2 p-3">
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+                aria-label="Filtrar por categoria"
+                className={campo}
+              >
+                <option value="todas">Toda categoria</option>
+                {[...CATEGORIAS]
+                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={filtroBanco}
+                onChange={(e) => setFiltroBanco(e.target.value)}
+                aria-label="Filtrar por banco"
+                className={campo}
+              >
+                <option value="todos">Todo banco</option>
+                {[...BANCOS]
+                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                  .map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={filtroPagamento}
+                onChange={(e) => setFiltroPagamento(e.target.value)}
+                aria-label="Filtrar por forma de pagamento"
+                className={campo}
+              >
+                <option value="todos">Todo pagamento</option>
+                {PAGAMENTOS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-muted-foreground">
+                {gastosFiltrados.length} lançamento(s)
+                {(filtroCategoria !== "todas" ||
+                  filtroBanco !== "todos" ||
+                  filtroPagamento !== "todos") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFiltroCategoria("todas");
+                      setFiltroBanco("todos");
+                      setFiltroPagamento("todos");
+                    }}
+                    className="ml-2 font-semibold text-primary underline"
+                  >
+                    limpar filtros
+                  </button>
+                )}
+              </span>
+              <span className="num font-bold text-accent">{brl(totalFiltrado)}</span>
+            </div>
+          </div>
+
+          {gastosFiltrados.map((g) => {
             const partes = g.parcela?.split("/");
             const totalParcelas = partes && partes.length === 2 ? Number(partes[1]) || 1 : 1;
             return (
