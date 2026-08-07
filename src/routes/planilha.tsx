@@ -556,13 +556,61 @@ function Planilha() {
             );
           })}
 
-          {!isLoading && doMes.length === 0 && (
+          {!isLoading && gastosFiltrados.length === 0 && (
             <p className="panel p-6 text-center text-xs text-muted-foreground">
-              Nenhum gasto em {MESES[mes]} de {ano}.
+              Nenhum gasto {doMes.length > 0 ? "com esses filtros" : `em ${MESES[mes]} de ${ano}`}.
             </p>
           )}
         </section>
       )}
+
+      {aba === "ia" && (
+        <section className="panel mt-4 p-4">
+          <h2 className="text-sm font-bold">Seu consultor financeiro</h2>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            A IA analisa {MESES[mes]} de {ano} e diz onde você mais gastou e o que dá pra economizar.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void analisar()}
+            disabled={analisando || doMes.length === 0}
+            className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+          >
+            {analisando
+              ? "Analisando seus gastos..."
+              : doMes.length === 0
+                ? "Sem gastos para analisar"
+                : conselho
+                  ? "Analisar de novo"
+                  : "Analisar meu mês"}
+          </button>
+
+          {conselho && (
+            <div className="mt-4 space-y-1.5 rounded-xl border border-border bg-[var(--surface-2)] p-3 text-xs leading-relaxed">
+              {conselho.split("\n").map((linha, i) => {
+                const texto = linha.trim();
+                if (!texto) return null;
+                const partes = texto.replace(/^[-*]\s+/, "• ").split(/\*\*(.+?)\*\*/g);
+                return (
+                  <p key={i}>
+                    {partes.map((p, j) =>
+                      j % 2 === 1 ? (
+                        <strong key={j} className="text-primary">
+                          {p}
+                        </strong>
+                      ) : (
+                        <span key={j}>{p}</span>
+                      ),
+                    )}
+                  </p>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
 
       {aba === "entradas" && (
         <section className="panel mt-4 p-4">
