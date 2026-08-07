@@ -346,13 +346,31 @@ function Planilha() {
               <span className="shrink-0 font-semibold text-primary">ver →</span>
             </button>
           )}
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
             <Stat titulo="Entradas" valor={brl(totalEntradas)} cor="text-primary" />
-            <Stat titulo="Gasto no mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto à vista" valor={brl(debito)} cor="text-accent" />
+            <Stat
+              titulo="Saldo disponível"
+              valor={brl(saldo)}
+              cor={saldo < 0 ? "text-destructive" : "text-primary"}
+            />
+            <Stat titulo="Fatura do crédito" valor={brl(credito)} cor="text-destructive" />
             <Stat titulo="Gasto na semana" valor={brl(totalSemana)} cor="text-accent" />
-            <Stat titulo="Saldo" valor={brl(saldo)} cor={saldo < 0 ? "text-destructive" : "text-primary"} />
+            <Stat titulo="Gasto total do mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat
+              titulo="Sobra após a fatura"
+              valor={brl(saldoAposFatura)}
+              cor={saldoAposFatura < 0 ? "text-destructive" : "text-primary"}
+            />
             <Stat titulo="Guardado" valor={brl(guardado)} cor="text-accent" />
           </div>
+
+          <p className="panel p-3 text-[11px] leading-relaxed text-muted-foreground">
+            O <span className="font-semibold text-foreground">saldo disponível</span> desconta só o
+            que já saiu do bolso (Pix, débito, dinheiro, boleto). A{" "}
+            <span className="font-semibold text-foreground">fatura do crédito</span> fica separada
+            porque você paga no fim do mês.
+          </p>
 
 
           <div className="grid gap-4 lg:grid-cols-2">
