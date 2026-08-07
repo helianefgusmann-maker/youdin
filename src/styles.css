@@ -185,9 +185,7 @@
 
   input,
   select,
-  textarea,
-  button {
-    font-size: max(1em, 16px);
+  textarea {
     max-width: 100%;
   }
 }
