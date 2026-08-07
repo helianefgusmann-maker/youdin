@@ -56,7 +56,7 @@ const campo =
 const ABAS = [
   { id: "resumo", label: "Resumo" },
   { id: "gastos", label: "Gastos" },
-  { id: "ia", label: "🤖 IA" },
+  { id: "ia", label: "Consultor" },
   { id: "entradas", label: "Entradas" },
   { id: "cofrinhos", label: "Cofrinhos" },
   { id: "lembretes", label: "Lembretes" },
