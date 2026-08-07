@@ -104,6 +104,14 @@ function Planilha() {
   const [novoLembreteValor, setNovoLembreteValor] = useState("");
   const [novoLembreteData, setNovoLembreteData] = useState("");
 
+  const [filtroCategoria, setFiltroCategoria] = useState("todas");
+  const [filtroBanco, setFiltroBanco] = useState("todos");
+  const [filtroPagamento, setFiltroPagamento] = useState("todos");
+
+  const [conselho, setConselho] = useState<string | null>(null);
+  const [analisando, setAnalisando] = useState(false);
+  const executarConselho = useServerFn(pedirConselho);
+
   const doAno = gastos.filter((g) => new Date(g.data_compra).getFullYear() === ano);
   const doMes = doAno.filter((g) => new Date(g.data_compra).getMonth() === mes);
   const entradasMes = entradas.filter((e) => {
@@ -118,10 +126,52 @@ function Planilha() {
     .reduce((s, g) => s + g.valor, 0);
   const totalEntradas = entradasMes.reduce((s, e) => s + e.valor, 0);
   const credito = doMes.filter((g) => g.pagamento === "Crédito").reduce((s, g) => s + g.valor, 0);
+  /** Gastos que já saíram do bolso agora (Pix, débito, dinheiro, boleto). */
   const debito = totalMes - credito;
   const guardado = cofrinhos.reduce((s, c) => s + c.guardado, 0);
-  const saldo = totalEntradas - totalMes;
+  /** O crédito só é pago no fim do mês, então não entra no saldo disponível. */
+  const saldo = totalEntradas - debito;
+  const saldoAposFatura = saldo - credito;
   const pendentes = lembretes.filter((l) => !l.concluido);
+
+  const gastosFiltrados = useMemo(
+    () =>
+      doMes.filter(
+        (g) =>
+          (filtroCategoria === "todas" || g.categoria === filtroCategoria) &&
+          (filtroBanco === "todos" || g.banco === filtroBanco) &&
+          (filtroPagamento === "todos" || g.pagamento === filtroPagamento),
+      ),
+    [doMes, filtroCategoria, filtroBanco, filtroPagamento],
+  );
+  const totalFiltrado = gastosFiltrados.reduce((s, g) => s + g.valor, 0);
+
+  async function analisar() {
+    setAnalisando(true);
+    try {
+      const r = await executarConselho({
+        data: {
+          mes: `${MESES[mes]} de ${ano}`,
+          entradas: totalEntradas,
+          totalGasto: totalMes,
+          credito,
+          aVista: debito,
+          categorias: porCategoria.slice(0, 20).map((c) => ({ nome: c.categoria, total: c.total })),
+          bancos: porBanco.slice(0, 20).map((b) => ({ nome: b.banco, total: b.total })),
+          maiores: [...doMes]
+            .sort((a, b) => b.valor - a.valor)
+            .slice(0, 10)
+            .map((g) => ({ descricao: g.descricao, valor: g.valor })),
+        },
+      });
+      setConselho(r.texto);
+    } catch {
+      toast.error("Não consegui analisar agora. Tente de novo.");
+    } finally {
+      setAnalisando(false);
+    }
+  }
+
 
   /** Ordem fixa para os cofrinhos não trocarem de posição ao editar. */
   const cofrinhosOrdenados = useMemo(
