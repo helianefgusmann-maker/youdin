@@ -6,13 +6,13 @@ import {
   BANCOS,
   CATEGORIAS,
   MESES,
+  PAGAMENTOS,
   brl,
   dataHora,
   inicioDaSemana,
   mascaraMoeda,
   numeroParaMascara,
   paraInputData,
-
   valorNumerico,
 } from "@/lib/financas";
 
@@ -24,7 +24,6 @@ import {
   useMutateTable,
 } from "@/lib/useFinancas";
 import { pedirConselho } from "@/lib/conselho.functions";
-import { PAGAMENTOS } from "@/lib/financas";
 import { ToggleTema } from "@/components/ToggleTema";
 import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
 
