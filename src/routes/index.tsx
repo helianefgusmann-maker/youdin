@@ -375,7 +375,7 @@ function RegistroRapido() {
               ))}
             </select>
           </div>
-          <div>
+          <div className="col-span-2 min-w-0">
             <label className={rotulo} htmlFor="quando">
               Data e hora
             </label>
@@ -384,7 +384,7 @@ function RegistroRapido() {
               type="datetime-local"
               value={quando}
               onChange={(e) => setQuando(e.target.value)}
-              className={`${campo} num`}
+              className={`${campo} num block min-w-0 appearance-none`}
             />
           </div>
         </div>

@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   BANCOS,
   CATEGORIAS,
   MESES,
+  PAGAMENTOS,
   brl,
   dataHora,
   inicioDaSemana,
   mascaraMoeda,
   numeroParaMascara,
   paraInputData,
-
   valorNumerico,
 } from "@/lib/financas";
 
@@ -22,8 +23,10 @@ import {
   useLembretes,
   useMutateTable,
 } from "@/lib/useFinancas";
+import { pedirConselho } from "@/lib/conselho.functions";
 import { ToggleTema } from "@/components/ToggleTema";
 import { GraficoAnual, GraficoBancos, GraficoCategorias } from "@/components/Graficos";
+
 
 
 export const Route = createFileRoute("/planilha")({
@@ -53,6 +56,7 @@ const campo =
 const ABAS = [
   { id: "resumo", label: "Resumo" },
   { id: "gastos", label: "Gastos" },
+  { id: "ia", label: "Consultor" },
   { id: "entradas", label: "Entradas" },
   { id: "cofrinhos", label: "Cofrinhos" },
   { id: "lembretes", label: "Lembretes" },
@@ -99,6 +103,14 @@ function Planilha() {
   const [novoLembreteValor, setNovoLembreteValor] = useState("");
   const [novoLembreteData, setNovoLembreteData] = useState("");
 
+  const [filtroCategoria, setFiltroCategoria] = useState("todas");
+  const [filtroBanco, setFiltroBanco] = useState("todos");
+  const [filtroPagamento, setFiltroPagamento] = useState("todos");
+
+  const [conselho, setConselho] = useState<string | null>(null);
+  const [analisando, setAnalisando] = useState(false);
+  const executarConselho = useServerFn(pedirConselho);
+
   const doAno = gastos.filter((g) => new Date(g.data_compra).getFullYear() === ano);
   const doMes = doAno.filter((g) => new Date(g.data_compra).getMonth() === mes);
   const entradasMes = entradas.filter((e) => {
@@ -113,10 +125,52 @@ function Planilha() {
     .reduce((s, g) => s + g.valor, 0);
   const totalEntradas = entradasMes.reduce((s, e) => s + e.valor, 0);
   const credito = doMes.filter((g) => g.pagamento === "Crédito").reduce((s, g) => s + g.valor, 0);
+  /** Gastos que já saíram do bolso agora (Pix, débito, dinheiro, boleto). */
   const debito = totalMes - credito;
   const guardado = cofrinhos.reduce((s, c) => s + c.guardado, 0);
-  const saldo = totalEntradas - totalMes;
+  /** O crédito só é pago no fim do mês, então não entra no saldo disponível. */
+  const saldo = totalEntradas - debito;
+  const saldoAposFatura = saldo - credito;
   const pendentes = lembretes.filter((l) => !l.concluido);
+
+  const gastosFiltrados = useMemo(
+    () =>
+      doMes.filter(
+        (g) =>
+          (filtroCategoria === "todas" || g.categoria === filtroCategoria) &&
+          (filtroBanco === "todos" || g.banco === filtroBanco) &&
+          (filtroPagamento === "todos" || g.pagamento === filtroPagamento),
+      ),
+    [doMes, filtroCategoria, filtroBanco, filtroPagamento],
+  );
+  const totalFiltrado = gastosFiltrados.reduce((s, g) => s + g.valor, 0);
+
+  async function analisar() {
+    setAnalisando(true);
+    try {
+      const r = await executarConselho({
+        data: {
+          mes: `${MESES[mes]} de ${ano}`,
+          entradas: totalEntradas,
+          totalGasto: totalMes,
+          credito,
+          aVista: debito,
+          categorias: porCategoria.slice(0, 20).map((c) => ({ nome: c.categoria, total: c.total })),
+          bancos: porBanco.slice(0, 20).map((b) => ({ nome: b.banco, total: b.total })),
+          maiores: [...doMes]
+            .sort((a, b) => b.valor - a.valor)
+            .slice(0, 10)
+            .map((g) => ({ descricao: g.descricao, valor: g.valor })),
+        },
+      });
+      setConselho(r.texto);
+    } catch {
+      toast.error("Não consegui analisar agora. Tente de novo.");
+    } finally {
+      setAnalisando(false);
+    }
+  }
+
 
   /** Ordem fixa para os cofrinhos não trocarem de posição ao editar. */
   const cofrinhosOrdenados = useMemo(
@@ -291,13 +345,31 @@ function Planilha() {
               <span className="shrink-0 font-semibold text-primary">ver →</span>
             </button>
           )}
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
             <Stat titulo="Entradas" valor={brl(totalEntradas)} cor="text-primary" />
-            <Stat titulo="Gasto no mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat titulo="Gasto à vista" valor={brl(debito)} cor="text-accent" />
+            <Stat
+              titulo="Saldo disponível"
+              valor={brl(saldo)}
+              cor={saldo < 0 ? "text-destructive" : "text-primary"}
+            />
+            <Stat titulo="Fatura do crédito" valor={brl(credito)} cor="text-destructive" />
             <Stat titulo="Gasto na semana" valor={brl(totalSemana)} cor="text-accent" />
-            <Stat titulo="Saldo" valor={brl(saldo)} cor={saldo < 0 ? "text-destructive" : "text-primary"} />
+            <Stat titulo="Gasto total do mês" valor={brl(totalMes)} cor="text-accent" />
+            <Stat
+              titulo="Sobra após a fatura"
+              valor={brl(saldoAposFatura)}
+              cor={saldoAposFatura < 0 ? "text-destructive" : "text-primary"}
+            />
             <Stat titulo="Guardado" valor={brl(guardado)} cor="text-accent" />
           </div>
+
+          <p className="panel p-3 text-[11px] leading-relaxed text-muted-foreground">
+            O <span className="font-semibold text-foreground">saldo disponível</span> desconta só o
+            que já saiu do bolso (Pix, débito, dinheiro, boleto). A{" "}
+            <span className="font-semibold text-foreground">fatura do crédito</span> fica separada
+            porque você paga no fim do mês.
+          </p>
 
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -353,7 +425,76 @@ function Planilha() {
 
       {aba === "gastos" && (
         <section className="mt-4 space-y-2">
-          {doMes.map((g) => {
+          <div className="panel space-y-2 p-3">
+            <div className="grid grid-cols-3 gap-2">
+              <select
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+                aria-label="Filtrar por categoria"
+                className={campo}
+              >
+                <option value="todas">Toda categoria</option>
+                {[...CATEGORIAS]
+                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={filtroBanco}
+                onChange={(e) => setFiltroBanco(e.target.value)}
+                aria-label="Filtrar por banco"
+                className={campo}
+              >
+                <option value="todos">Todo banco</option>
+                {[...BANCOS]
+                  .sort((a, b) => a.localeCompare(b, "pt-BR"))
+                  .map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+              </select>
+              <select
+                value={filtroPagamento}
+                onChange={(e) => setFiltroPagamento(e.target.value)}
+                aria-label="Filtrar por forma de pagamento"
+                className={campo}
+              >
+                <option value="todos">Todo pagamento</option>
+                {PAGAMENTOS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center justify-between gap-2 text-[11px]">
+              <span className="text-muted-foreground">
+                {gastosFiltrados.length} lançamento(s)
+                {(filtroCategoria !== "todas" ||
+                  filtroBanco !== "todos" ||
+                  filtroPagamento !== "todos") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFiltroCategoria("todas");
+                      setFiltroBanco("todos");
+                      setFiltroPagamento("todos");
+                    }}
+                    className="ml-2 font-semibold text-primary underline"
+                  >
+                    limpar filtros
+                  </button>
+                )}
+              </span>
+              <span className="num font-bold text-accent">{brl(totalFiltrado)}</span>
+            </div>
+          </div>
+
+          {gastosFiltrados.map((g) => {
             const partes = g.parcela?.split("/");
             const totalParcelas = partes && partes.length === 2 ? Number(partes[1]) || 1 : 1;
             return (
@@ -414,13 +555,61 @@ function Planilha() {
             );
           })}
 
-          {!isLoading && doMes.length === 0 && (
+          {!isLoading && gastosFiltrados.length === 0 && (
             <p className="panel p-6 text-center text-xs text-muted-foreground">
-              Nenhum gasto em {MESES[mes]} de {ano}.
+              Nenhum gasto {doMes.length > 0 ? "com esses filtros" : `em ${MESES[mes]} de ${ano}`}.
             </p>
           )}
         </section>
       )}
+
+      {aba === "ia" && (
+        <section className="panel mt-4 p-4">
+          <h2 className="text-sm font-bold">Seu consultor financeiro</h2>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            A IA analisa {MESES[mes]} de {ano} e diz onde você mais gastou e o que dá pra economizar.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void analisar()}
+            disabled={analisando || doMes.length === 0}
+            className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110 disabled:opacity-60"
+          >
+            {analisando
+              ? "Analisando seus gastos..."
+              : doMes.length === 0
+                ? "Sem gastos para analisar"
+                : conselho
+                  ? "Analisar de novo"
+                  : "Analisar meu mês"}
+          </button>
+
+          {conselho && (
+            <div className="mt-4 space-y-1.5 rounded-xl border border-border bg-[var(--surface-2)] p-3 text-xs leading-relaxed">
+              {conselho.split("\n").map((linha, i) => {
+                const texto = linha.trim();
+                if (!texto) return null;
+                const partes = texto.replace(/^[-*]\s+/, "• ").split(/\*\*(.+?)\*\*/g);
+                return (
+                  <p key={i}>
+                    {partes.map((p, j) =>
+                      j % 2 === 1 ? (
+                        <strong key={j} className="text-primary">
+                          {p}
+                        </strong>
+                      ) : (
+                        <span key={j}>{p}</span>
+                      ),
+                    )}
+                  </p>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
 
       {aba === "entradas" && (
         <section className="panel mt-4 p-4">
